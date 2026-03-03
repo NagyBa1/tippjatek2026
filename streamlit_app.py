@@ -12,7 +12,8 @@ PARTY_DEFS = [
     {"name": "Tisza Párt", "color": "#7EC8FF"},   # világos kék
     {"name": "Fidesz", "color": "#FF8A00"},       # narancssárga
     {"name": "Mi Hazánk", "color": "#2ECC71"},    # zöld
-    {"name": "DK", "color": "#0B2D6B"},           # sötétkék
+    {"name": "DK", "color": "#0B2D6B"}, # sötétkék
+    {"name": "Egyéb", "color": "#9AA0A6"}
 ]
 PARTIES = [p["name"] for p in PARTY_DEFS]
 PARTY_COLOR = {p["name"]: p["color"] for p in PARTY_DEFS}
@@ -216,14 +217,20 @@ if page == "Tipp leadása":
 
     # progress: 0..100
     st.progress(min(max(total / 100.0, 0.0), 1.0))
-
+    
     c1, c2, c3 = st.columns([1, 1, 1])
     c1.metric("Kiosztott összesen", f"{total:.2f}%")
     c2.metric("Maradt", f"{remaining:.2f}%")
     c3.metric("Állapot", "OK ✅" if is_close_100(total) else ("TÚL SOK ❌" if total > 100 else "HIÁNYZIK ⚠️"))
 
     can_submit = bool(full_name.strip()) and is_close_100(total)
-
+    st.info(
+    "📌 Megjegyzés az „Egyéb” kategóriához\n\n"
+    "Az „Egyéb” mező kizárólag a nemzetiségi és egyéb nem pártlistás országos listák eredményét jelenti. "
+    "Minden pártlista külön szerepel a tippelésben.\n\n"
+    "A 2022-es választáson például a német nemzetiségi lista kb. 0,5%-ot ért el. "
+    "Az ilyen szavazatok az összesített 100%-ba beleszámítanak, ezért szükséges az „Egyéb” mező."
+)
     if not full_name.strip():
         st.info("Írd be a teljes neved.")
     elif not is_close_100(total):
