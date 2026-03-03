@@ -217,13 +217,7 @@ if page == "Tipp leadása":
 
     # progress: 0..100
     st.progress(min(max(total / 100.0, 0.0), 1.0))
-     st.info(
-    "📌 Megjegyzés az „Egyéb” kategóriához\n\n"
-    "Az „Egyéb” mező kizárólag a nemzetiségi és egyéb nem pártlistás országos listák eredményét jelenti. "
-    "Minden pártlista külön szerepel a tippelésben.\n\n"
-    "A 2022-es választáson például a német nemzetiségi lista kb. 0,5%-ot ért el. "
-    "Az ilyen szavazatok az összesített 100%-ba beleszámítanak, ezért szükséges az „Egyéb” mező."
-)
+    
     c1, c2, c3 = st.columns([1, 1, 1])
     c1.metric("Kiosztott összesen", f"{total:.2f}%")
     c2.metric("Maradt", f"{remaining:.2f}%")
@@ -242,7 +236,13 @@ if page == "Tipp leadása":
     if st.button("Beküldés", type="primary", disabled=not can_submit, use_container_width=True):
         upsert_tip(client, full_name.strip(), tip)
         st.success("Mentve! ✅")
-
+st.info(
+    "📌 Megjegyzés az „Egyéb” kategóriához\n\n"
+    "Az „Egyéb” mező kizárólag a nemzetiségi és egyéb nem pártlistás országos listák eredményét jelenti. "
+    "Minden pártlista külön szerepel a tippelésben.\n\n"
+    "A 2022-es választáson például a német nemzetiségi lista kb. 0,5%-ot ért el. "
+    "Az ilyen szavazatok az összesített 100%-ba beleszámítanak, ezért szükséges az „Egyéb” mező."
+)
 
 elif page == "Ranglista":
     st.subheader("Ranglista")
