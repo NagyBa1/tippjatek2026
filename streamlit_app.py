@@ -224,7 +224,13 @@ if page == "Tipp leadása":
     c3.metric("Állapot", "OK ✅" if is_close_100(total) else ("TÚL SOK ❌" if total > 100 else "HIÁNYZIK ⚠️"))
 
     can_submit = bool(full_name.strip()) and is_close_100(total)
-   
+    st.info(
+    "📌 Megjegyzés az „Egyéb” kategóriához\n\n"
+    "Az „Egyéb” mező kizárólag a nemzetiségi és egyéb nem pártlistás országos listák eredményét jelenti. "
+    "Minden pártlista külön szerepel a tippelésben.\n\n"
+    "A 2022-es választáson például a német nemzetiségi lista kb. 0,5%-ot ért el. "
+    "Az ilyen szavazatok az összesített 100%-ba beleszámítanak, ezért szükséges az „Egyéb” mező."
+)
     if not full_name.strip():
         st.info("Írd be a teljes neved.")
     elif not is_close_100(total):
@@ -236,13 +242,7 @@ if page == "Tipp leadása":
     if st.button("Beküldés", type="primary", disabled=not can_submit, use_container_width=True):
         upsert_tip(client, full_name.strip(), tip)
         st.success("Mentve! ✅")
-st.info(
-    "📌 Megjegyzés az „Egyéb” kategóriához\n\n"
-    "Az „Egyéb” mező kizárólag a nemzetiségi és egyéb nem pártlistás országos listák eredményét jelenti. "
-    "Minden pártlista külön szerepel a tippelésben.\n\n"
-    "A 2022-es választáson például a német nemzetiségi lista kb. 0,5%-ot ért el. "
-    "Az ilyen szavazatok az összesített 100%-ba beleszámítanak, ezért szükséges az „Egyéb” mező."
-)
+
 
 elif page == "Ranglista":
     st.subheader("Ranglista")
