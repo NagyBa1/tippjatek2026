@@ -6,18 +6,24 @@ import streamlit as st
 from supabase import create_client
 
 # ----------------------------
-# 1) ÁLLÍTSD BE A PÁRTLISTÁT ITT
+# PÁRTOK + SZÍNEK
 # ----------------------------
-PARTIES = [
-    "Párt A",
-    "Párt B",
-    "Párt C",
-    "Párt D",
+PARTY_DEFS = [
+    {"name": "Tisza Párt", "color": "#7EC8FF"},   # világos kék
+    {"name": "Fidesz", "color": "#FF8A00"},       # narancssárga
+    {"name": "Mi Hazánk", "color": "#2ECC71"},    # zöld
+    {"name": "DK", "color": "#0B2D6B"},           # sötétkék
 ]
+PARTIES = [p["name"] for p in PARTY_DEFS]
+PARTY_COLOR = {p["name"]: p["color"] for p in PARTY_DEFS}
 
+# pontozás
 BASE_SCORE = 1000
-PENALTY_PER_POINT = 10
+PENALTY_PER_POINT = 10   # 1% összeltérés = -10 pont (összeltérés Σ |tipp - tény|)
 WINNER_BONUS = 100
+
+STEP = 0.01
+FMT = "%.2f"
 
 
 def sb():
@@ -30,7 +36,8 @@ def sb():
 
 
 def is_close_100(x: float) -> bool:
-    return math.isclose(x, 100.0, abs_tol=1e-9)
+    # 2 tizedes mellett is legyen stabil: 99.99/100.01 se menjen át
+    return abs(x - 100.0) < 0.005
 
 
 def now_utc():
@@ -70,8 +77,8 @@ def compute_scores(tips_rows, results: dict):
     if not results:
         return scores
 
-    max_res = max(results.values()) if results else None
-    winners = {p for p, v in results.items() if v == max_res}
+    max_res = max(float(results.get(p, 0.0)) for p in PARTIES)
+    winners = {p for p in PARTIES if float(results.get(p, 0.0)) == max_res}
 
     for r in tips_rows:
         name = r["full_name"]
@@ -83,29 +90,79 @@ def compute_scores(tips_rows, results: dict):
             rv = float(results.get(p, 0.0))
             total_diff += abs(tv - rv)
 
-        score = max(0, int(round(BASE_SCORE - PENALTY_PER_POINT * total_diff)))
+        # 2 tizedesre kerekítve számoljuk a diffet is
+        total_diff = round(total_diff, 2)
 
-        if tip:
-            max_tip = max(float(tip.get(p, 0.0)) for p in PARTIES)
-            tipped_winners = {p for p in PARTIES if float(tip.get(p, 0.0)) == max_tip}
-            if tipped_winners & winners:
-                score += WINNER_BONUS
+        score = BASE_SCORE - PENALTY_PER_POINT * total_diff
+        score = max(0, int(round(score)))
 
-        scores.append({"Név": name, "Összeltérés": round(total_diff, 2), "Pont": score})
+        max_tip = max(float(tip.get(p, 0.0)) for p in PARTIES) if tip else 0.0
+        tipped_winners = {p for p in PARTIES if float(tip.get(p, 0.0)) == max_tip}
+        if tipped_winners & winners:
+            score += WINNER_BONUS
 
-    scores.sort(key=lambda x: (-x["Pont"], x["Összeltérés"], x["Név"]))
+        scores.append({
+            "Név": name,
+            "Összeltérés": f"{total_diff:.2f}",
+            "Pont": score,
+        })
+
+    scores.sort(key=lambda x: (-x["Pont"], float(x["Összeltérés"]), x["Név"]))
     return scores
 
 
-st.set_page_config(page_title="Országgyűlési tippjáték", page_icon="🗳️", layout="centered")
+# ----------------------------
+# STYLE
+# ----------------------------
+st.set_page_config(page_title="Tippjáték", page_icon="🗳️", layout="centered")
+
+st.markdown(
+    """
+<style>
+/* kicsit “apposabb” spacing */
+.block-container {padding-top: 1.5rem; padding-bottom: 2rem; max-width: 900px;}
+/* party card */
+.party-card{
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  margin-bottom: 10px;
+}
+.party-row{
+  display:flex; align-items:center; justify-content:space-between; gap: 12px;
+}
+.party-left{
+  display:flex; align-items:center; gap: 10px;
+}
+.party-pill{
+  width: 12px; height: 12px; border-radius: 999px;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.06) inset;
+}
+.party-name{
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+.subtle{opacity: 0.8;}
+.hr{
+  height: 1px; background: rgba(255,255,255,0.08);
+  margin: 12px 0;
+}
+.small{
+  font-size: 0.92rem;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 client = sb()
-
-st.title("🗳️ Tippjáték")
-
-page = st.sidebar.radio("Menü", ["Tipp leadása", "Ranglista", "Admin"], index=0)
-
 locked = get_locked(client)
 results_data, results_updated_at = get_results(client)
+
+st.title("🗳️ Tippjáték")
+page = st.sidebar.radio("Menü", ["Tipp leadása", "Ranglista", "Admin"], index=0)
+
 
 if page == "Tipp leadása":
     st.subheader("Tipp leadása")
@@ -115,31 +172,70 @@ if page == "Tipp leadása":
         st.stop()
 
     full_name = st.text_input("Teljes név", placeholder="Pl. Kovács János")
-    st.write("Add meg pártonként a százalékokat (0–100). Az összegnek **pont 100%**-nak kell lennie.")
+
+    st.markdown('<div class="small subtle">Add meg pártonként a százalékokat (0–100). Az összegnek <b>pont 100%</b>-nak kell lennie.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
 
     tip = {}
     total = 0.0
 
-    for p in PARTIES:
-        v = st.number_input(p, min_value=0.0, max_value=100.0, value=0.0, step=0.1, format="%.1f")
-        tip[p] = float(v)
+    for party in PARTIES:
+        color = PARTY_COLOR[party]
+        st.markdown(
+            f"""
+<div class="party-card">
+  <div class="party-row">
+    <div class="party-left">
+      <div class="party-pill" style="background:{color};"></div>
+      <div class="party-name">{party}</div>
+    </div>
+    <div class="subtle small">%</div>
+  </div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
+        v = st.number_input(
+            label=f"{party} (%)",
+            min_value=0.0,
+            max_value=100.0,
+            value=0.0,
+            step=STEP,
+            format=FMT,
+            key=f"inp_{party}",
+            label_visibility="collapsed",
+        )
+        tip[party] = float(v)
         total += float(v)
 
-    remaining = 100.0 - total
-    col1, col2 = st.columns(2)
-    col1.metric("Kiosztott összesen", f"{total:.1f}%")
-    col2.metric("Maradt", f"{remaining:.1f}%")
+    total = round(total, 2)
+    remaining = round(100.0 - total, 2)
+
+    st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
+
+    # progress: 0..100
+    st.progress(min(max(total / 100.0, 0.0), 1.0))
+
+    c1, c2, c3 = st.columns([1, 1, 1])
+    c1.metric("Kiosztott összesen", f"{total:.2f}%")
+    c2.metric("Maradt", f"{remaining:.2f}%")
+    c3.metric("Állapot", "OK ✅" if is_close_100(total) else ("TÚL SOK ❌" if total > 100 else "HIÁNYZIK ⚠️"))
 
     can_submit = bool(full_name.strip()) and is_close_100(total)
 
     if not full_name.strip():
         st.info("Írd be a teljes neved.")
     elif not is_close_100(total):
-        st.error("Az összeg nem 100%. Javítsd, és utána küldheted be.")
+        if total > 100:
+            st.error("Több mint 100%-ot osztottál ki. Vegyél vissza valamelyikből.")
+        else:
+            st.warning("Még nem 100%. Ossz ki még a maradékból.")
 
-    if st.button("Beküldés", type="primary", disabled=not can_submit):
+    if st.button("Beküldés", type="primary", disabled=not can_submit, use_container_width=True):
         upsert_tip(client, full_name.strip(), tip)
         st.success("Mentve! ✅")
+
 
 elif page == "Ranglista":
     st.subheader("Ranglista")
@@ -157,7 +253,8 @@ elif page == "Ranglista":
     with st.expander("Éjféli tényadatok"):
         st.json(results_data)
 
-else:
+
+else:  # Admin
     st.subheader("Admin")
 
     admin_pass = st.secrets.get("ADMIN_PASSWORD", os.environ.get("ADMIN_PASSWORD"))
@@ -179,17 +276,26 @@ else:
         st.toast("Beállítás mentve.")
 
     st.write("### Éjféli eredmény rögzítése")
-    st.caption("Írd be ugyanazokra a pártokra a tény százalékokat. Itt is 100% legyen az összeg.")
+    st.caption("Írd be a tény százalékokat. Itt is 100% legyen az összeg.")
 
     res = {}
     res_total = 0.0
-    for p in PARTIES:
-        default_val = float(results_data.get(p, 0.0)) if results_data else 0.0
-        v = st.number_input(f"Tény: {p}", min_value=0.0, max_value=100.0, value=default_val, step=0.1, format="%.1f")
-        res[p] = float(v)
+    for party in PARTIES:
+        default_val = float(results_data.get(party, 0.0)) if results_data else 0.0
+        v = st.number_input(
+            f"Tény: {party}",
+            min_value=0.0,
+            max_value=100.0,
+            value=default_val,
+            step=STEP,
+            format=FMT,
+            key=f"res_{party}",
+        )
+        res[party] = float(v)
         res_total += float(v)
 
-    st.write(f"Összeg: **{res_total:.1f}%**")
+    res_total = round(res_total, 2)
+    st.write(f"Összeg: **{res_total:.2f}%**")
 
     if st.button("Eredmény mentése", type="primary", disabled=not is_close_100(res_total)):
         set_results(client, res)
