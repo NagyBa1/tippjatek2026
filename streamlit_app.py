@@ -236,7 +236,7 @@ if page == "Tipp leadása":
     if st.sidebar.button("📜 Szabályok"):
         st.session_state.show_rules = True
 
-    with st.expander("📜 Szabályok (kattints ide)", expanded=st.session_state.show_rules):
+    with st.expander("📜 Szabályok", expanded=st.session_state.show_rules):
         st.markdown(RULES_PART1)
         st.image("lista_pelda.png", caption="Országos pártlistás eredmények – 2022")
         st.markdown(RULES_PART2)
