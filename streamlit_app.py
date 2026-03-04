@@ -32,40 +32,64 @@ WINNER_BONUS = 100
 STEP = 0.01
 FMT = "%.2f"
 
-RULES_MD = f"""
+RULES_MD = """
 ## 📜 Tippjáték – szabályok
 
-**1) Mire tippelünk?**  
-Az **országos listás szavazatok százalékos arányára** tippelünk (listánként).  
-Nem mandátumokra, nem egyénire — **csak a listás %-okra**.
+### 1) Mire tippelünk?
+Az **országos pártlisták szavazatainak százalékos arányára** tippelünk.
 
-**2) 100,00% kötelező**  
-A beküldéshez a mezők összege **pont 100,00%** kell legyen.
+Nem mandátumokra, nem az egyéni választókerületekre, hanem **kizárólag a listás százalékokra**.
 
-**3) “Egyéb” mire való?**  
-Az “Egyéb” kizárólag a **nemzetiségi és egyéb nem pártlistás országos listák** aránya.  
-Minden pártlista külön mezőben szerepel. (2022-ben pl. a német nemzetiségi lista kb. **0,5%** volt.)
+Az országos pártlisták eredményei 2022-ben például így néztek ki:
 
-**4) Meddig lehet tippelni?**  
-A szabály szerinti zárás: **{CLOSES_AT_TEXT}**.  
-(Az admin ezt az oldalon egy kapcsolóval lezárja. Lezárás után nincs új tipp / módosítás.)
+st.image("lista_pelda.png", caption="Országos pártlistás eredmények – 2022")
 
-**5) Lehet módosítani a tippet?**  
-Igen. Amíg nyitva a tippelés, a **saját neveddel bármikor újraküldheted** — és **az utolsó beküldött** tipped számít.
 
-**6) Melyik eredmény számít “ténynek”?**  
-A pontozáshoz a választás estéjén egy előre kijelölt pillanatkép-időpontot használunk: **{SNAPSHOT_AT_TEXT}**.  
-👉 *Ha kell (pl. technikai okból), ez az időpont előre egyeztetve változtatható.*
+### 2) 100,00% kötelező
+A beküldéshez az összes mező összege **pontosan 100,00%** kell legyen.
 
-**7) Pontozás**  
-Minden mezőnél: `|tipp − tény|`, és ezeket összeadjuk.  
-**Pont = 1000 − (10 × összes eltérés)** (minimum 0).  
-+ **100 bónusz**, ha eltalálod, melyik lista lett az első.
 
-**8) Ki nyer?**  
-A legtöbb ponttal. Pontegyenlőségnél a kisebb összeltérés dönt.
+### 3) Meddig lehet tippelni?
+A szabály szerinti zárás:
+
+**2026. április 10. 20:00**
+
+Ezután már nem lehet új tippet leadni vagy meglévőt módosítani.
+
+
+### 4) Lehet módosítani a tippet?
+Igen.
+
+Amíg a tippelés nyitva van, a **saját neved egyedi azonosítóként szolgál**.  
+Ha ugyanazzal a névvel új tippet küldesz be, akkor **a korábbi tipped felülíródik**, és **mindig az utolsó beküldött verzió számít**.
+
+
+### 5) Milyen eredménnyel döntjük el a játékot?
+A választás estéjén **éjfélkor az NVI oldalán szereplő listás eredmények** alapján döntjük el a tippjátékot.
+
+👉 Ha valamilyen technikai okból szükséges, ez az időpont **előre egyeztetve módosítható**.
+
+
+### 6) Pontozás
+Minden játékos tippjét összehasonlítjuk a valódi eredményekkel.
+
+Minden pártnál megnézzük, hogy **mennyire tér el a tipped a tényleges százaléktól**.  
+Minél kisebb az eltérés, annál jobb.
+
+Az összes eltérésből kiszámolunk egy pontszámot.  
+**Minél közelebb van a tipped a valós eredményhez, annál több pontot kapsz.**
+
+Extra bónusz jár annak, aki **eltalálja, melyik pártlista kapja a legtöbb szavazatot**.
+
+
+### 7) Ki nyer?
+Amint rögzítjük az éjféli eredményt, az oldal **automatikusan kiszámolja a pontokat**, és rangsort készít.
+
+A legtöbb pontot szerző játékos nyeri a tippjátékot.
+
+A győztes jutalma:  
+**egy 3D nyomtatott Lázár János WC-kefe tartó**, amelyet az eredményvárón ünnepélyesen vehet át.
 """
-
 
 def sb():
     url = st.secrets.get("SUPABASE_URL", os.environ.get("SUPABASE_URL"))
