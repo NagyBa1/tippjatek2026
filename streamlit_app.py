@@ -32,18 +32,19 @@ WINNER_BONUS = 100
 STEP = 0.01
 FMT = "%.2f"
 
-RULES_MD = """
+RULES_PART1 = """
 ## 📜 Tippjáték – szabályok
 
 ### 1) Mire tippelünk?
+
 Az **országos pártlisták szavazatainak százalékos arányára** tippelünk.
 
 Nem mandátumokra, nem az egyéni választókerületekre, hanem **kizárólag a listás százalékokra**.
 
 Az országos pártlisták eredményei 2022-ben például így néztek ki:
+"""
 
-st.image("lista_pelda.png", caption="Országos pártlistás eredmények – 2022")
-
+RULES_PART2 = """
 
 ### 2) 100,00% kötelező
 A beküldéshez az összes mező összege **pontosan 100,00%** kell legyen.
@@ -235,8 +236,10 @@ if page == "Tipp leadása":
     if st.sidebar.button("📜 Szabályok"):
         st.session_state.show_rules = True
 
-    with st.expander("📜 Szabályok", expanded=st.session_state.show_rules):
-        st.markdown(RULES_MD)
+    with st.expander("📜 Szabályok (kattints ide)", expanded=st.session_state.show_rules):
+        st.markdown(RULES_PART1)
+        st.image("lista_pelda.png", caption="Országos pártlistás eredmények – 2022")
+        st.markdown(RULES_PART2)
 
     st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
 
