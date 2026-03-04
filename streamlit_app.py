@@ -1,8 +1,17 @@
 import os
 from datetime import datetime, timezone
-
+import base64
+from pathlib import Path
 import streamlit as st
 from supabase import create_client
+
+
+@st.cache_data
+def img_to_data_uri(path: str) -> str:
+    p = Path(path)
+    data = p.read_bytes()
+    b64 = base64.b64encode(data).decode("utf-8")
+    return f"data:image/png;base64,{b64}"
 
 # ----------------------------
 # PÁRTOK + SZÍNEK
@@ -14,6 +23,13 @@ PARTY_DEFS = [
     {"name": "DK", "color": "#0B2D6B"},    
     {"name": "MKKP", "color": "#ed283c"}# sötétkék
 ]
+LOGO_PATHS = {
+    "Tisza Párt": "tisza.png",
+    "Fidesz": "fidesz.png",
+    "Mi Hazánk": "mihazank.png",
+    "DK": "dk.png",
+    "MKKP": "mkkp.png"
+}
 PARTIES = [p["name"] for p in PARTY_DEFS]
 PARTY_COLOR = {p["name"]: p["color"] for p in PARTY_DEFS}
 
@@ -258,7 +274,10 @@ if page == "Tipp leadása":
     total = 0.0
 
     for party in PARTIES:
-
+        logo_html = ""
+        if party in LOGO_PATHS and Path(LOGO_PATHS[party]).exists():
+        logo_uri = img_to_data_uri(LOGO_PATHS[party])
+        logo_html = f'<img class="party-logo" src="{logo_uri}" style="width:24px;height:24px;margin-right:8px;">'
         color = PARTY_COLOR[party]
         st.markdown(
             f"""
@@ -266,6 +285,7 @@ if page == "Tipp leadása":
   <div class="party-row">
     <div class="party-left">
       <div class="party-pill" style="background:{color};"></div>
+      {logo_html}
       <div class="party-name">{party}</div>
     </div>
     <div class="subtle small">%</div>
