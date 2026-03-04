@@ -1,5 +1,4 @@
 import os
-import math
 from datetime import datetime, timezone
 
 import streamlit as st
@@ -12,11 +11,18 @@ PARTY_DEFS = [
     {"name": "Tisza Párt", "color": "#7EC8FF"},   # világos kék
     {"name": "Fidesz", "color": "#FF8A00"},       # narancssárga
     {"name": "Mi Hazánk", "color": "#2ECC71"},    # zöld
-    {"name": "DK", "color": "#0B2D6B"}, # sötétkék
-    {"name": "Egyéb", "color": "#9AA0A6"}
+    {"name": "DK", "color": "#0B2D6B"},           # sötétkék
+    {"name": "Egyéb", "color": "#9AA0A6"},        # szürke
 ]
 PARTIES = [p["name"] for p in PARTY_DEFS]
 PARTY_COLOR = {p["name"]: p["color"] for p in PARTY_DEFS}
+
+# ----------------------------
+# IDŐPONTOK / SZÖVEGEK
+# (csak kiírás a szabályokhoz – a tényleges lezárást az Admin "locked" kapcsoló kezeli)
+# ----------------------------
+CLOSES_AT_TEXT = "2026. április 10. 20:00"   # tippelés zárása (szabály szerint)
+SNAPSHOT_AT_TEXT = "00:00 (éjféli pillanatkép)"  # ezt később átírhatod, ha nem pont 00:00 legyen
 
 # pontozás
 BASE_SCORE = 1000
@@ -25,6 +31,40 @@ WINNER_BONUS = 100
 
 STEP = 0.01
 FMT = "%.2f"
+
+RULES_MD = f"""
+## 📜 Tippjáték – szabályok (gyorsan, érthetően)
+
+**1) Mire tippelünk?**  
+Az **országos listás szavazatok százalékos arányára** tippelünk (listánként).  
+Nem mandátumokra, nem egyénire — **csak a listás %-okra**.
+
+**2) 100,00% kötelező**  
+A beküldéshez a mezők összege **pont 100,00%** kell legyen.
+
+**3) “Egyéb” mire való?**  
+Az “Egyéb” kizárólag a **nemzetiségi és egyéb nem pártlistás országos listák** aránya.  
+Minden pártlista külön mezőben szerepel. (2022-ben pl. a német nemzetiségi lista kb. **0,5%** volt.)
+
+**4) Meddig lehet tippelni?**  
+A szabály szerinti zárás: **{CLOSES_AT_TEXT}**.  
+(Az admin ezt az oldalon egy kapcsolóval lezárja. Lezárás után nincs új tipp / módosítás.)
+
+**5) Lehet módosítani a tippet?**  
+Igen. Amíg nyitva a tippelés, a **saját neveddel bármikor újraküldheted** — és **az utolsó beküldött** tipped számít.
+
+**6) Melyik eredmény számít “ténynek”?**  
+A pontozáshoz a választás estéjén egy előre kijelölt pillanatkép-időpontot használunk: **{SNAPSHOT_AT_TEXT}**.  
+👉 *Ha kell (pl. technikai okból), ez az időpont előre egyeztetve változtatható.*
+
+**7) Pontozás**  
+Minden mezőnél: `|tipp − tény|`, és ezeket összeadjuk.  
+**Pont = 1000 − (10 × összes eltérés)** (minimum 0).  
++ **100 bónusz**, ha eltalálod, melyik lista lett az első.
+
+**8) Ki nyer?**  
+A legtöbb ponttal. Pontegyenlőségnél a kisebb összeltérés dönt.
+"""
 
 
 def sb():
@@ -66,6 +106,7 @@ def set_results(client, data: dict):
 
 
 def upsert_tip(client, full_name: str, tip: dict):
+    # full_name primary key -> ugyanazzal a névvel újraküldve felülírja (lezárásig szándékosan)
     client.table("tips").upsert({"full_name": full_name, "tip": tip}).execute()
 
 
@@ -91,7 +132,6 @@ def compute_scores(tips_rows, results: dict):
             rv = float(results.get(p, 0.0))
             total_diff += abs(tv - rv)
 
-        # 2 tizedesre kerekítve számoljuk a diffet is
         total_diff = round(total_diff, 2)
 
         score = BASE_SCORE - PENALTY_PER_POINT * total_diff
@@ -120,9 +160,7 @@ st.set_page_config(page_title="Tippjáték", page_icon="🗳️", layout="center
 st.markdown(
     """
 <style>
-/* kicsit “apposabb” spacing */
 .block-container {padding-top: 1.5rem; padding-bottom: 2rem; max-width: 900px;}
-/* party card */
 .party-card{
   border-radius: 14px;
   padding: 14px 16px;
@@ -149,9 +187,7 @@ st.markdown(
   height: 1px; background: rgba(255,255,255,0.08);
   margin: 12px 0;
 }
-.small{
-  font-size: 0.92rem;
-}
+.small{font-size: 0.92rem;}
 </style>
 """,
     unsafe_allow_html=True,
@@ -167,35 +203,46 @@ page = st.sidebar.radio("Menü", ["Tipp leadása", "Ranglista", "Admin"], index=
 
 if page == "Tipp leadása":
     st.subheader("Tipp leadása")
-    # ----------------------------
-    # Szabályok doboz: első megnyitáskor automatikusan nyitva
-    # + sidebar gombbal bármikor újranyitható
-    # ----------------------------
-    if "show_rules" not in st.session_state:
-        st.session_state.show_rules = True  # első betöltésnél nyissa ki
 
-    # Sidebar gomb: bármikor visszahozható
+    # --- Szabályok doboz: első megnyitáskor automatikusan nyitva ---
+    if "show_rules" not in st.session_state:
+        st.session_state.show_rules = True
+
     if st.sidebar.button("📜 Szabályok"):
         st.session_state.show_rules = True
 
     with st.expander("📜 Szabályok (kattints ide)", expanded=st.session_state.show_rules):
         st.markdown(RULES_MD)
-        if st.button("✅ Oké, értem", key="rules_ok"):
+        if st.button("✅ Oké, értem", key="rules_ok", use_container_width=True):
             st.session_state.show_rules = False
+
+    st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
 
     if locked:
         st.warning("A tippelés le van zárva.")
         st.stop()
 
     full_name = st.text_input("Teljes név", placeholder="Pl. Kovács János")
-
-    st.markdown('<div class="small subtle">Add meg pártonként a százalékokat (0–100). Az összegnek <b>pont 100%</b>-nak kell lennie.</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="small subtle">Add meg pártonként a százalékokat (0–100). Az összegnek <b>pont 100%</b>-nak kell lennie.</div>',
+        unsafe_allow_html=True
+    )
     st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
 
     tip = {}
     total = 0.0
 
     for party in PARTIES:
+        # Az "Egyéb" mező elé betesszük a magyarázatot
+        if party == "Egyéb":
+            st.info(
+                "📌 Megjegyzés az „Egyéb” kategóriához\n\n"
+                "Az „Egyéb” mező kizárólag a nemzetiségi és egyéb nem pártlistás országos listák eredményét jelenti. "
+                "Minden pártlista külön szerepel a tippelésben.\n\n"
+                "A 2022-es választáson például a német nemzetiségi lista kb. 0,5%-ot ért el. "
+                "Az ilyen szavazatok az összesített 100%-ba beleszámítanak, ezért szükséges az „Egyéb” mező."
+            )
+
         color = PARTY_COLOR[party]
         st.markdown(
             f"""
@@ -227,25 +274,18 @@ if page == "Tipp leadása":
 
     total = round(total, 2)
     remaining = round(100.0 - total, 2)
-    
+
     st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
 
-    # progress: 0..100
     st.progress(min(max(total / 100.0, 0.0), 1.0))
-    
+
     c1, c2, c3 = st.columns([1, 1, 1])
     c1.metric("Kiosztott összesen", f"{total:.2f}%")
     c2.metric("Maradt", f"{remaining:.2f}%")
     c3.metric("Állapot", "OK ✅" if is_close_100(total) else ("TÚL SOK ❌" if total > 100 else "HIÁNYZIK ⚠️"))
 
     can_submit = bool(full_name.strip()) and is_close_100(total)
-    st.info(
-    "📌 Megjegyzés az „Egyéb” kategóriához\n\n"
-    "Az „Egyéb” mező kizárólag a nemzetiségi és egyéb nem pártlistás országos listák eredményét jelenti. "
-    "Minden pártlista külön szerepel a tippelésben.\n\n"
-    "A 2022-es választáson például a német nemzetiségi lista kb. 0,5%-ot ért el. "
-    "Az ilyen szavazatok az összesített 100%-ba beleszámítanak, ezért szükséges az „Egyéb” mező."
-)
+
     if not full_name.strip():
         st.info("Írd be a teljes neved.")
     elif not is_close_100(total):
