@@ -11,7 +11,8 @@ PARTY_DEFS = [
     {"name": "Tisza Párt", "color": "#7EC8FF"},   # világos kék
     {"name": "Fidesz", "color": "#FF8A00"},       # narancssárga
     {"name": "Mi Hazánk", "color": "#2ECC71"},    # zöld
-    {"name": "DK", "color": "#0B2D6B"},           # sötétkék
+    {"name": "DK", "color": "#0B2D6B"},    
+    {"name": "MKKP", "color": "#ed283c"}# sötétkék
 ]
 PARTIES = [p["name"] for p in PARTY_DEFS]
 PARTY_COLOR = {p["name"]: p["color"] for p in PARTY_DEFS}
@@ -52,7 +53,7 @@ A beküldéshez az összes mező összege **pontosan 100,00%** kell legyen.
 ### 3) Meddig lehet tippelni?
 A szabály szerinti zárás:
 
-**2026. április 10. 20:00**
+**2026. április 5. 20:00**
 
 Ezután már nem lehet új tippet leadni vagy meglévőt módosítani.
 
