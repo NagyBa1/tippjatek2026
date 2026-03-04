@@ -84,7 +84,7 @@ Extra bónusz jár annak, aki **eltalálja, melyik pártlista kapja a legtöbb s
 
 
 ### 7) Ki nyer?
-Amint rögzítjük az éjféli eredményt, az oldal **automatikusan kiszámolja a pontokat**, és rangsort készít.
+Amint rögzítjük az éjféli eredményt, az oldal **automatikusan kiszámolja a pontokat** (remélem), és rangsort készít.
 
 A legtöbb pontot szerző játékos nyeri a tippjátékot.
 
