@@ -12,7 +12,6 @@ PARTY_DEFS = [
     {"name": "Fidesz", "color": "#FF8A00"},       # narancssárga
     {"name": "Mi Hazánk", "color": "#2ECC71"},    # zöld
     {"name": "DK", "color": "#0B2D6B"},           # sötétkék
-    {"name": "Egyéb", "color": "#9AA0A6"},        # szürke
 ]
 PARTIES = [p["name"] for p in PARTY_DEFS]
 PARTY_COLOR = {p["name"]: p["color"] for p in PARTY_DEFS}
@@ -258,15 +257,6 @@ if page == "Tipp leadása":
     total = 0.0
 
     for party in PARTIES:
-        # Az "Egyéb" mező elé betesszük a magyarázatot
-        if party == "Egyéb":
-            st.info(
-                "📌 Megjegyzés az „Egyéb” kategóriához\n\n"
-                "Az „Egyéb” mező kizárólag a nemzetiségi és egyéb nem pártlistás országos listák eredményét jelenti. "
-                "Minden pártlista külön szerepel a tippelésben.\n\n"
-                "A 2022-es választáson például a német nemzetiségi lista kb. 0,5%-ot ért el. "
-                "Az ilyen szavazatok az összesített 100%-ba beleszámítanak, ezért szükséges az „Egyéb” mező."
-            )
 
         color = PARTY_COLOR[party]
         st.markdown(
