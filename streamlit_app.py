@@ -167,6 +167,21 @@ page = st.sidebar.radio("Menü", ["Tipp leadása", "Ranglista", "Admin"], index=
 
 if page == "Tipp leadása":
     st.subheader("Tipp leadása")
+    # ----------------------------
+    # Szabályok doboz: első megnyitáskor automatikusan nyitva
+    # + sidebar gombbal bármikor újranyitható
+    # ----------------------------
+    if "show_rules" not in st.session_state:
+        st.session_state.show_rules = True  # első betöltésnél nyissa ki
+
+    # Sidebar gomb: bármikor visszahozható
+    if st.sidebar.button("📜 Szabályok"):
+        st.session_state.show_rules = True
+
+    with st.expander("📜 Szabályok (kattints ide)", expanded=st.session_state.show_rules):
+        st.markdown(RULES_MD)
+        if st.button("✅ Oké, értem", key="rules_ok"):
+            st.session_state.show_rules = False
 
     if locked:
         st.warning("A tippelés le van zárva.")
