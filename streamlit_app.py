@@ -213,8 +213,6 @@ if page == "Tipp leadása":
 
     with st.expander("📜 Szabályok (kattints ide)", expanded=st.session_state.show_rules):
         st.markdown(RULES_MD)
-        if st.button("✅ Oké, értem", key="rules_ok", use_container_width=True):
-            st.session_state.show_rules = False
 
     st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
 
