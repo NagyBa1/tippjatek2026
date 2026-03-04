@@ -276,8 +276,8 @@ if page == "Tipp leadása":
     for party in PARTIES:
         logo_html = ""
         if party in LOGO_PATHS and Path(LOGO_PATHS[party]).exists():
-        logo_uri = img_to_data_uri(LOGO_PATHS[party])
-        logo_html = f'<img class="party-logo" src="{logo_uri}" style="width:24px;height:24px;margin-right:8px;">'
+            logo_uri = img_to_data_uri(LOGO_PATHS[party])
+            logo_html = f'<img class="party-logo" src="{logo_uri}" style="width:24px;height:24px;margin-right:8px;">'
         color = PARTY_COLOR[party]
         st.markdown(
             f"""
