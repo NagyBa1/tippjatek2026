@@ -353,7 +353,7 @@ elif page == "Ranglista":
 
 else:  # Admin
     st.subheader("Admin")
-
+    
     admin_pass = st.secrets.get("ADMIN_PASSWORD", os.environ.get("ADMIN_PASSWORD"))
     if not admin_pass:
         st.error("Hiányzik az ADMIN_PASSWORD (Secrets-ben add meg).")
@@ -397,3 +397,22 @@ else:  # Admin
     if st.button("Eredmény mentése", type="primary", disabled=not is_close_100(res_total)):
         set_results(client, res)
         st.success("Éjféli eredmény mentve.")
+    st.write("### Beérkezett tippek")
+
+    tips_rows = load_all_tips(client)
+
+    if not tips_rows:
+        st.info("Még nincs beküldött tipp.")
+    else:
+        table = []
+
+        for r in tips_rows:
+            row = {"Név": r["full_name"]}
+            tip = r["tip"] or {}
+
+            for p in PARTIES:
+                row[p] = tip.get(p, 0.0)
+
+            table.append(row)
+
+        st.dataframe(table, use_container_width=True)
