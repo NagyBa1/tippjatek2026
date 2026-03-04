@@ -33,7 +33,7 @@ STEP = 0.01
 FMT = "%.2f"
 
 RULES_MD = f"""
-## 📜 Tippjáték – szabályok (gyorsan, érthetően)
+## 📜 Tippjáték – szabályok
 
 **1) Mire tippelünk?**  
 Az **országos listás szavazatok százalékos arányára** tippelünk (listánként).  
@@ -211,7 +211,7 @@ if page == "Tipp leadása":
     if st.sidebar.button("📜 Szabályok"):
         st.session_state.show_rules = True
 
-    with st.expander("📜 Szabályok (kattints ide)", expanded=st.session_state.show_rules):
+    with st.expander("📜 Szabályok", expanded=st.session_state.show_rules):
         st.markdown(RULES_MD)
 
     st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
