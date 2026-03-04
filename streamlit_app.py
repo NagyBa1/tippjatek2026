@@ -284,7 +284,6 @@ if page == "Tipp leadása":
 <div class="party-card">
   <div class="party-row">
     <div class="party-left">
-      <div class="party-pill" style="background:{color};"></div>
       {logo_html}
       <div class="party-name">{party}</div>
     </div>
