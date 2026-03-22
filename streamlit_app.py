@@ -33,14 +33,10 @@ LOGO_PATHS = {
 PARTIES = [p["name"] for p in PARTY_DEFS]
 PARTY_COLOR = {p["name"]: p["color"] for p in PARTY_DEFS}
 
-# ----------------------------
-# IDŐPONTOK / SZÖVEGEK
-# (csak kiírás a szabályokhoz – a tényleges lezárást az Admin "locked" kapcsoló kezeli)
-# ----------------------------
-CLOSES_AT_TEXT = "2026. április 10. 20:00"   # tippelés zárása (szabály szerint)
-SNAPSHOT_AT_TEXT = "00:00 (éjféli pillanatkép)"  # ezt később átírhatod, ha nem pont 00:00 legyen
+CLOSES_AT_TEXT = "2026. április 10. 20:00"  
+SNAPSHOT_AT_TEXT = "00:00 (éjféli pillanatkép)"  
 
-# pontozás
+
 BASE_SCORE = 1000
 PENALTY_PER_POINT = 10   # 1% összeltérés = -10 pont (összeltérés Σ |tipp - tény|)
 WINNER_BONUS = 100
@@ -118,7 +114,6 @@ def sb():
 
 
 def is_close_100(x: float) -> bool:
-    # 2 tizedes mellett is legyen stabil: 99.99/100.01 se menjen át
     return abs(x - 100.0) < 0.005
 
 
@@ -147,7 +142,6 @@ def set_results(client, data: dict):
 
 
 def upsert_tip(client, full_name: str, tip: dict):
-    # full_name primary key -> ugyanazzal a névvel újraküldve felülírja (lezárásig szándékosan)
     client.table("tips").upsert({"full_name": full_name, "tip": tip}).execute()
 
 
@@ -193,9 +187,6 @@ def compute_scores(tips_rows, results: dict):
     return scores
 
 
-# ----------------------------
-# STYLE
-# ----------------------------
 st.set_page_config(page_title="Tippjáték", page_icon="🗳️", layout="centered")
 
 st.markdown(
@@ -244,8 +235,6 @@ page = st.sidebar.radio("Menü", ["Tipp leadása", "Ranglista", "Admin"], index=
 
 if page == "Tipp leadása":
     st.subheader("Tipp leadása")
-
-    # --- Szabályok doboz: első megnyitáskor automatikusan nyitva ---
     if "show_rules" not in st.session_state:
         st.session_state.show_rules = True
 
@@ -263,7 +252,7 @@ if page == "Tipp leadása":
         st.warning("A tippelés le van zárva.")
         st.stop()
 
-    full_name = st.text_input("Teljes név", placeholder="Pl. Kovács János")
+    full_name = st.text_input("Teljes név", placeholder="Pl. Menczer Tamás")
     st.markdown(
         '<div class="small subtle">Add meg pártonként a százalékokat (0–100). Az összegnek <b>pont 100%</b>-nak kell lennie.</div>',
         unsafe_allow_html=True
@@ -371,9 +360,6 @@ else:  # Admin
     if new_locked != locked:
         set_locked(client, new_locked)
         st.toast("Beállítás mentve.")
-
-    st.write("### Éjféli eredmény rögzítése")
-    st.caption("Írd be a tény százalékokat. Itt is 100% legyen az összeg.")
 
     res = {}
     res_total = 0.0
