@@ -13,15 +13,13 @@ def img_to_data_uri(path: str) -> str:
     b64 = base64.b64encode(data).decode("utf-8")
     return f"data:image/png;base64,{b64}"
 
-# ----------------------------
-# PÁRTOK + SZÍNEK
-# ----------------------------
+
 PARTY_DEFS = [
-    {"name": "Tisza Párt", "color": "#7EC8FF"},   # világos kék
-    {"name": "Fidesz", "color": "#FF8A00"},       # narancssárga
-    {"name": "Mi Hazánk", "color": "#2ECC71"},    # zöld
+    {"name": "Tisza Párt", "color": "#7EC8FF"}, 
+    {"name": "Fidesz", "color": "#FF8A00"},      
+    {"name": "Mi Hazánk", "color": "#2ECC71"},   
     {"name": "DK", "color": "#0B2D6B"},    
-    {"name": "MKKP", "color": "#ed283c"}# sötétkék
+    {"name": "MKKP", "color": "#ed283c"}
 ]
 LOGO_PATHS = {
     "Tisza Párt": "tisza.png",
@@ -38,7 +36,7 @@ SNAPSHOT_AT_TEXT = "00:00 (éjféli pillanatkép)"
 
 
 BASE_SCORE = 1000
-PENALTY_PER_POINT = 10   # 1% összeltérés = -10 pont (összeltérés Σ |tipp - tény|)
+PENALTY_PER_POINT = 10  
 WINNER_BONUS = 100
 
 STEP = 0.01
